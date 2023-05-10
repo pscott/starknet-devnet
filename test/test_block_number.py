@@ -49,11 +49,28 @@ def test_block_number_incremented():
     # genesis + declare + deploy
     assert int(block_number_before) == GENESIS_BLOCK_NUMBER + 2
 
-    invoke(
+    r1 = invoke(
         calls=[(deploy_info["address"], "write_block_number", [])],
         account_address=PREDEPLOYED_ACCOUNT_ADDRESS,
         private_key=PREDEPLOYED_ACCOUNT_PRIVATE_KEY,
+        nonce=0
     )
+    print("!@# r")
+    print(r1)
+
+    for x in range(10):
+        try:
+            r2 = invoke(
+                calls=[(deploy_info["address"], "write_block_number", [])],
+                account_address=PREDEPLOYED_ACCOUNT_ADDRESS,
+                private_key=PREDEPLOYED_ACCOUNT_PRIVATE_KEY,
+                nonce=x+1
+            )
+            print("!@# r +1:")
+            print(x+1)
+            print(r2)
+        except Exception as err:
+            print(f"Unexpected {err=}, {type(err)=}")
 
     written_block_number = call(
         function="read_block_number",
@@ -66,6 +83,9 @@ def test_block_number_incremented():
 
     block_number_after = my_get_block_number(deploy_info["address"])
     assert int(block_number_after) == GENESIS_BLOCK_NUMBER + 3
+
+    # import time
+    # time.sleep(60)
 
 
 @devnet_in_background(*PREDEPLOY_ACCOUNT_CLI_ARGS)

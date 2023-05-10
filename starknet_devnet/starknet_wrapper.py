@@ -6,6 +6,7 @@ starkware.starknet.testing.starknet.Starknet.
 from copy import deepcopy
 from types import TracebackType
 from typing import Dict, List, Optional, Set, Tuple, Type, Union
+import time
 
 import cloudpickle as pickle
 from starkware.starknet.business_logic.state.state import BlockInfo, CachedState
@@ -301,7 +302,13 @@ class StarknetWrapper:
             block_info=current_state.block_info,
             general_config=self.get_state().general_config,
         )
+
+        print("!@# DEEPCOPY !@# - await self.__preserve_current_state(current_state)!!!")
+        start = time.time()
         await self.__preserve_current_state(current_state)
+        end = time.time()
+        print("DEEPCOPY time in s:")
+        print(end - start)
 
         (
             deployed_cairo0_contracts,
@@ -602,12 +609,17 @@ class StarknetWrapper:
             else transaction.sender_address
         )
 
+        print("!@# DEEPCOPY !@#! - await state.copy().execute_entry_point_raw in CALL!!!")
+        start = time.time()
         call_info = await state.copy().execute_entry_point_raw(
             contract_address=address,
             selector=transaction.entry_point_selector,
             calldata=transaction.calldata,
             caller_address=0,
         )
+        end = time.time()
+        print("DEEPCOPY time in s:")
+        print(end - start)
 
         result = list(map(hex, call_info.retdata))
         return {"result": result}
@@ -804,7 +816,12 @@ class StarknetWrapper:
             transaction.set_block(block=block)
 
         # Update latest state before block generation
+        print("!@# DEEPCOPY!@# - self.__latest_state = state.copy() !!!")
+        start = time.time()
         self.__latest_state = state.copy()
+        end = time.time()
+        print("DEEPCOPY time in s:")
+        print(end - start)
 
         self.pending_txs = []
 
@@ -852,11 +869,18 @@ class StarknetWrapper:
                     status_code=400,
                     message="Invalid format of fee estimation request",
                 ) from error
+            
+            execution_info = None
 
-            execution_info = await internal_tx.apply_state_updates(
-                cached_state_copy,
-                state.general_config,
-            )
+            try:
+                # print("execution_info")
+                execution_info = await internal_tx.apply_state_updates(
+                    cached_state_copy,
+                    state.general_config,
+                )
+                # print(execution_info)
+            except Exception as err:
+                print(f"Unexpected {err=}, {type(err)=}")
 
             trace = TransactionTrace(
                 validate_invocation=FunctionInvocation.from_optional_internal(
@@ -889,12 +913,18 @@ class StarknetWrapper:
             state.general_config.chain_id.value
         )
 
-        execution_info = await internal_call.apply_state_updates(
-            # pylint: disable=protected-access
-            state.state._copy(),
-            state.general_config,
-        )
-
+        try:
+            print("execution_info")
+            execution_info = await internal_call.apply_state_updates(
+                # pylint: disable=protected-access
+                state.state._copy(),
+                state.general_config,
+            )
+            print(execution_info)
+        except Exception as err:
+            print(f"Unexpected {err=}, {type(err)=}")
+            raise
+    
         actual_fee = calculate_tx_fee(
             resources=execution_info.actual_resources,
             gas_price=state.general_config.min_gas_price,
