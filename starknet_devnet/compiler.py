@@ -24,8 +24,9 @@ from starknet_devnet.util import StarknetDevnetException
 class ContractClassCompiler(ABC):
     """Base class of contract class compilers"""
 
+    @abstractmethod
     def compile_contract_class(self, contract_class: ContractClass) -> CompiledClass:
-        """Take the sierra and return the compiled instance"""
+        """Take the sierra and return the casm (compiled assembly)"""
         raise NotImplementedError
 
 
@@ -54,11 +55,12 @@ Failed compilation from Sierra to Casm! Read more about starting Devnet with --c
 
 
 class CustomContractClassCompiler(ContractClassCompiler):
-    """Uses the compiler according to the compiler_manifest provided in initialization"""
+    """Directly operates on the compiler command which you provide to it"""
 
     @abstractmethod
     def get_sierra_compiler_command(self) -> List[str]:
         """Returns the shell command of the sierra compiler"""
+        raise NotImplementedError
 
     def compile_contract_class(self, contract_class: ContractClass) -> CompiledClass:
         with tempfile.TemporaryDirectory() as tmp_dir:

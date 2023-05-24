@@ -102,9 +102,8 @@ def test_invalid_sierra_compiler(compiler_value: str):
     )
 
     assert execution.returncode != 0
-    assert (
-        "The argument of --sierra-compiler-path must be an executable"
-        in read_stream(execution.stderr)
+    assert f"Error: {compiler_value} is not an executable" in read_stream(
+        execution.stderr
     )
     assert read_stream(execution.stdout) == ""
 
@@ -128,7 +127,7 @@ def test_valid_compiler_specification(cli_args: List[str]):
     assert execution.returncode == 0
 
     stderr = read_stream(execution.stderr)
-    assert "The argument of --sierra-compiler-path must be an executable" not in stderr
+    assert "is not an executable" not in stderr
     assert "Cairo compiler error" not in stderr
     assert "Using cairo compiler" in read_stream(execution.stdout)
 

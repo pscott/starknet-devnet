@@ -244,10 +244,30 @@ def _parse_cairo_compiler_manifest(manifest_path: str):
 
 def _parse_sierra_compiler_path(compiler_path: str):
     if not (os.path.isfile(compiler_path) and os.access(compiler_path, os.X_OK)):
-        sys.exit("Error: The argument of --sierra-compiler-path must be an executable")
+        sys.exit(f"Error: {compiler_path} is not an executable")
 
     _assert_valid_compiler([compiler_path, "--version"])
     return compiler_path
+
+
+def _check_compiler_args(parsed_args: argparse.Namespace):
+    if parsed_args.cairo_compiler_manifest and parsed_args.sierra_compiler_path:
+        sys.exit(
+            "Error: Only one of {--cairo-compiler-manifest,--sierra-compiler-path} can be provided"
+        )
+
+    if not (parsed_args.cairo_compiler_manifest or parsed_args.sierra_compiler_path):
+        import starkware.starknet.compiler.v1 as default_v1_compiler  # pylint: disable=import-outside-toplevel
+
+        default_binary_path = os.path.join(
+            # __file__ gives __init__.py, so we need parent
+            os.path.dirname(default_v1_compiler.__file__),
+            "bin",
+            "starknet-sierra-compile",
+        )
+        _parse_sierra_compiler_path(default_binary_path)
+
+    # otherwise the args are checked later
 
 
 def parse_args(raw_args: List[str]):
@@ -412,10 +432,7 @@ def parse_args(raw_args: List[str]):
             parsed_args.fork_network, parsed_args.fork_block, parsed_args.fork_retries
         )
 
-    if parsed_args.cairo_compiler_manifest and parsed_args.sierra_compiler_path:
-        sys.exit(
-            "Error: Only one of {--cairo-compiler-manifest,--sierra-compiler-path} can be provided"
-        )
+    _check_compiler_args(parsed_args)
 
     return parsed_args
 
