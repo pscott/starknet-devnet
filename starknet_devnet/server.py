@@ -57,14 +57,15 @@ class GunicornServer(BaseApplication):
             {
                 "loggers": {
                     "gunicorn.error": {
-                        # Disable info messages like "Starting gunicorn"
-                        "level": "WARNING",
+                        "level": "INFO" if self.args.verbose else "WARNING",
                         "handlers": ["error_console"],
                         "propagate": False,
                         "qualname": "gunicorn.error",
                     },
                     "gunicorn.access": {
-                        "level": "INFO",
+                        "level": "INFO"
+                        if self.args.verbose or not self.args.hide_server_logs
+                        else "WARNING",
                         # Log access to stderr to maintain backward compatibility
                         "handlers": ["error_console"],
                         "propagate": False,

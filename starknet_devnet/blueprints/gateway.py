@@ -9,7 +9,7 @@ from starkware.starkware_utils.error_handling import StarkErrorCode
 
 from starknet_devnet.devnet_config import DumpOn
 from starknet_devnet.state import state
-from starknet_devnet.util import StarknetDevnetException, fixed_length_hex
+from starknet_devnet.util import StarknetDevnetException, fixed_length_hex, log_request
 
 from .shared import validate_transaction
 
@@ -17,6 +17,7 @@ gateway = Blueprint("gateway", __name__, url_prefix="/gateway")
 
 
 @gateway.route("/add_transaction", methods=["POST"])
+@log_request()
 async def add_transaction():
     """Endpoint for accepting (state-changing) transactions."""
 

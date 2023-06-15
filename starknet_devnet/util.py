@@ -1,12 +1,16 @@
 """
 Utility functions used across the project.
 """
+import functools
+import json
 import logging
 import os
+import pprint
 import sys
 from dataclasses import dataclass
 from typing import Dict, List, Set, Tuple
 
+from flask import request
 from starkware.starknet.business_logic.state.state import CachedState
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from starkware.starknet.services.api.feeder_gateway.response_objects import (
@@ -263,3 +267,71 @@ class LogSuppressor:
 # FeederGatewayClient is implemented in such a way that it logs and raises;
 # this suppresses the logging
 suppress_feeder_gateway_client_logger = LogSuppressor("services.external_api.client")
+
+logger = logging.getLogger("gunicorn.error")
+
+
+def extract_transaction_info_to_log(transaction: dict) -> dict:
+    """Getting info about transaction for logging"""
+    keys_to_exclude = [
+        "contract_class",  # mainly unreadable data
+    ]
+    to_log = {}
+    for key, val in transaction.items():
+        if key not in keys_to_exclude:
+            if isinstance(val, dict):
+                val = extract_transaction_info_to_log(val)
+            to_log[key] = val
+
+    return to_log
+
+
+def log_request(rpc=False):
+    "decorator to log endpoint request, response"
+
+    def decorator(func):
+        @functools.wraps(func)
+        async def wrapper(*args, **kwargs):
+            if rpc:
+                logger.info(
+                    "%s RPC request: %s",
+                    func.__name__,
+                    pprint.pformat(extract_transaction_info_to_log(kwargs)),
+                )
+            else:
+                logger.info(
+                    "%s request: %s",
+                    func.__name__,
+                    pprint.pformat(
+                        extract_transaction_info_to_log(json.loads(request.get_data()))
+                    ),
+                )
+            try:
+                resp = await func(*args, **kwargs)
+                if rpc:
+                    logger.info(
+                        "%s RPC response: %s", func.__name__, pprint.pformat(resp)
+                    )
+                else:
+                    logger.info(
+                        "%s response: %s",
+                        func.__name__,
+                        pprint.pformat(resp.get_json()),
+                    )
+                return resp
+            except Exception:
+                exc_type, exc_val, exc_tb = sys.exc_info()
+                if isinstance(exc_type, StarkException):
+                    error_message = {
+                        "message": exc_val.message,
+                        "code": str(exc_val.code),
+                        "trace": exc_tb,
+                    }
+                else:
+                    error_message = {"message": str(exc_val), "trace": exc_tb}
+                logger.error("%s request failed: %s", func.__name__, error_message)
+                raise
+
+        return wrapper
+
+    return decorator

@@ -52,3 +52,13 @@ class PredeployedContractWrapper(ABC):
             abi=self.contract_class.abi,
             contract_address=self.address,
         )
+
+        if (
+            self.starknet_wrapper.config.verbose
+            or not self.starknet_wrapper.config.hide_predeployed_contracts
+        ):
+            self.print()
+
+    def print(self):
+        "Prints contract info"
+        raise NotImplementedError()

@@ -30,11 +30,6 @@ class Accounts:
         self.list = []
 
         self.__generate()
-        if (
-            starknet_wrapper.config.accounts
-            and not starknet_wrapper.config.hide_predeployed_accounts
-        ):
-            self.__print()
 
     def __getitem__(self, index) -> Account:
         return self.list[index]
@@ -43,6 +38,11 @@ class Accounts:
         """deploy listed accounts"""
         for account in self.list:
             await account.deploy()
+        if self.starknet_wrapper.config.accounts and (
+            self.starknet_wrapper.config.verbose
+            or not self.starknet_wrapper.config.hide_predeployed_contracts
+        ):
+            self.__print()
 
     def add(self, account):
         """append account to list"""
@@ -70,13 +70,6 @@ class Accounts:
 
     def __print(self):
         """stdout accounts list"""
-        for idx, account in enumerate(self):
-            print(f"Account #{idx}")
-            print(f"Address: {hex(account.address)}")
-            print(f"Public key: {hex(account.public_key)}")
-            print(f"Private key: {hex(account.private_key)}\n")
-
-        print(f"Initial balance of each account: {self.__initial_balance} WEI")
         print("Seed to replicate this account sequence:", self.__seed)
         warn(
             "WARNING: Use these accounts and their keys ONLY for local testing. "

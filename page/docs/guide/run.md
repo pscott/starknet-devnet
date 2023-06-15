@@ -9,18 +9,19 @@ Installing the package adds the `starknet-devnet` command.
 <!-- Developer note: the following section should be a copy-paste of `starknet-devnet --help` -->
 
 ```text
-usage: starknet-devnet [-h] [-v] [--host HOST] [--port PORT] [--load-path LOAD_PATH] [--dump-path DUMP_PATH] [--dump-on DUMP_ON]
+usage: starknet-devnet [-h] [-v] [--verbose] [--host HOST] [--port PORT] [--load-path LOAD_PATH] [--dump-path DUMP_PATH] [--dump-on DUMP_ON]
                        [--lite-mode] [--blocks-on-demand] [--accounts ACCOUNTS] [--initial-balance INITIAL_BALANCE] [--seed SEED]
-                       [--hide-predeployed-accounts] [--start-time START_TIME] [--gas-price GAS_PRICE] [--allow-max-fee-zero]
+                       [--hide-predeployed-contracts] [--start-time START_TIME] [--gas-price GAS_PRICE] [--allow-max-fee-zero]
                        [--timeout TIMEOUT] [--account-class ACCOUNT_CLASS] [--fork-network FORK_NETWORK] [--fork-block FORK_BLOCK]
                        [--fork-retries FORK_RETRIES] [--chain-id CHAIN_ID] [--disable-rpc-request-validation]
-                       [--disable-rpc-response-validation]
+                       [--disable-rpc-response-validation] [--hide-server-logs]
 
 Run a local instance of Starknet Devnet
 
 optional arguments:
   -h, --help            show this help message and exit
   -v, --version         Print the version
+  --verbose             Show more verbose output. Has higher priority than --hide-server-logs and --hide-predeployed-contracts
   --host HOST           Specify the address to listen at; defaults to 127.0.0.1 (use the address the program outputs on start)
   --port PORT, -p PORT  Specify the port to listen at; defaults to 5050
   --load-path LOAD_PATH
@@ -34,8 +35,8 @@ optional arguments:
   --initial-balance INITIAL_BALANCE, -e INITIAL_BALANCE
                         Specify the initial balance of accounts to be predeployed; defaults to 1e+21
   --seed SEED           Specify the seed for randomness of accounts to be predeployed
-  --hide-predeployed-accounts
-                        Prevents from printing the predeployed accounts details
+  --hide-predeployed-contracts, --hide-predeployed-accounts
+                        Prevents from printing the predeployed contracts details. Argument --hide-predeployed-accounts is deprecated 
   --start-time START_TIME
                         Specify the start time of the genesis block in Unix time seconds
   --gas-price GAS_PRICE, -g GAS_PRICE
@@ -60,6 +61,8 @@ optional arguments:
                         Specify the path to the manifest (Cargo.toml) of the Cairo 1.0 compiler to be used for contract recompilation; if omitted, the default x86-compatible compiler (from cairo-lang package) is used
   --sierra-compiler-path SIERRA_COMPILER_PATH
                         Specify the path to the binary executable of starknet-sierra-compile
+
+  --hide-server-logs    Hide server access logging
 ```
 
 <!-- Developer note: the previous section should be a copy-paste of `starknet-devnet --help` -->

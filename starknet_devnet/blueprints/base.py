@@ -9,6 +9,7 @@ from starknet_devnet.state import state
 from starknet_devnet.util import (
     StarknetDevnetException,
     check_valid_dump_path,
+    log_request,
     parse_hex_string,
 )
 
@@ -126,6 +127,7 @@ def load():
 
 
 @base.route("/increase_time", methods=["POST"])
+@log_request()
 async def increase_time():
     """Increases the block timestamp offset and generates a new block"""
     request_dict = request.json or {}
@@ -147,6 +149,7 @@ async def increase_time():
 
 
 @base.route("/set_time", methods=["POST"])
+@log_request()
 async def set_time():
     """Sets the block timestamp offset and generates a new block"""
     request_dict = request.json or {}
@@ -190,6 +193,7 @@ async def get_fee_token():
 
 
 @base.route("/mint", methods=["POST"])
+@log_request()
 async def mint():
     """Mint token and transfer to the provided address"""
     request_json = request.json or {}

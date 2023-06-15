@@ -39,7 +39,7 @@ from starknet_devnet.blueprints.rpc.utils import (
 )
 from starknet_devnet.constants import LEGACY_TX_VERSION
 from starknet_devnet.state import state
-from starknet_devnet.util import StarknetDevnetException
+from starknet_devnet.util import StarknetDevnetException, log_request
 
 
 @validate_schema("getTransactionByHash")
@@ -102,14 +102,13 @@ async def pending_transactions() -> List[RpcTransaction]:
 
 
 @validate_schema("addInvokeTransaction")
+@log_request(rpc=True)
 async def add_invoke_transaction(invoke_transaction: RpcBroadcastedInvokeTxn) -> dict:
     """
     Submit a new transaction to be added to the chain
     """
-    invoke_function = make_invoke_function(invoke_transaction)
-
     _, transaction_hash = await state.starknet_wrapper.invoke(
-        external_tx=invoke_function
+        external_tx=make_invoke_function(invoke_transaction)
     )
     return RpcInvokeTransactionResult(
         transaction_hash=rpc_felt(transaction_hash),
@@ -117,6 +116,7 @@ async def add_invoke_transaction(invoke_transaction: RpcBroadcastedInvokeTxn) ->
 
 
 @validate_schema("addDeclareTransaction")
+@log_request(rpc=True)
 async def add_declare_transaction(
     declare_transaction: RpcBroadcastedDeclareTxn,
 ) -> dict:
@@ -148,16 +148,15 @@ async def add_declare_transaction(
 
 
 @validate_schema("addDeployAccountTransaction")
+@log_request(rpc=True)
 async def add_deploy_account_transaction(
     deploy_account_transaction: RpcBroadcastedDeployAccountTxn,
 ) -> dict:
     """
     Submit a new deploy account transaction
     """
-    deploy_account_tx = make_deploy_account(deploy_account_transaction)
-
-    contract_address, transaction_hash = await state.starknet_wrapper.deploy_account(
-        external_tx=deploy_account_tx
+    (contract_address, transaction_hash,) = await state.starknet_wrapper.deploy_account(
+        external_tx=make_deploy_account(deploy_account_transaction)
     )
 
     status_response = await state.starknet_wrapper.transactions.get_transaction_status(

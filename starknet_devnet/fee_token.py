@@ -1,6 +1,8 @@
 """
 Fee token and its predefined constants.
 """
+import pprint
+import sys
 
 from starkware.solidity.utils import load_nearby_contract
 from starkware.starknet.business_logic.transaction.objects import InternalInvokeFunction
@@ -16,7 +18,7 @@ from starknet_devnet.account_util import get_execute_args
 from starknet_devnet.chargeable_account import ChargeableAccount
 from starknet_devnet.constants import SUPPORTED_TX_VERSION
 from starknet_devnet.predeployed_contract_wrapper import PredeployedContractWrapper
-from starknet_devnet.util import Uint256, str_to_felt
+from starknet_devnet.util import Uint256, logger, str_to_felt
 
 
 class FeeToken(PredeployedContractWrapper):
@@ -131,14 +133,27 @@ class FeeToken(PredeployedContractWrapper):
 
         tx_hash = None
         transaction = await self.get_mint_transaction(to_address, amount_uint256)
+        logger.info(transaction)
         starknet: Starknet = self.starknet_wrapper.starknet
         if lite:
             internal_tx = InternalInvokeFunction.from_external(
                 transaction, starknet.state.general_config
             )
-            await starknet.state.execute_tx(internal_tx)
+            execution_info = await starknet.state.execute_tx(internal_tx)
+            logger.info(
+                "transaction execution info: %s", pprint.pformat(execution_info.dump())
+            )
         else:
+            # execution info logs inside starknet_wrapper.invoke call
             _, tx_hash_int = await self.starknet_wrapper.invoke(transaction)
             tx_hash = hex(tx_hash_int)
 
         return tx_hash
+
+    def print(self):
+        print("")
+        print("Predeployed FeeToken")
+        print(f"Address: {hex(self.address)}")
+        print(f"Class Hash: {hex(self.class_hash)}")
+        print(f"Symbol: {self.SYMBOL}\n")
+        sys.stdout.flush()

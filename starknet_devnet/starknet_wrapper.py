@@ -3,6 +3,7 @@
 This module introduces `StarknetWrapper`, a wrapper class of
 starkware.starknet.testing.starknet.Starknet.
 """
+import pprint
 from copy import deepcopy
 from types import TracebackType
 from typing import Dict, List, Optional, Set, Tuple, Type, Union
@@ -105,6 +106,7 @@ from .util import (
     get_replaced_classes,
     get_storage_diffs,
     group_classes_by_version,
+    logger,
     warn,
 )
 
@@ -511,6 +513,14 @@ class StarknetWrapper:
                     if not self.starknet_wrapper.config.blocks_on_demand:
                         await self.starknet_wrapper.generate_latest_block()
 
+                logger.info(
+                    "transaction execution info: %s",
+                    pprint.pformat(self.execution_info.dump()),
+                )
+                logger.info(
+                    "transaction receipt: %s",
+                    pprint.pformat(transaction.get_receipt().dump()),
+                )
                 return True  # indicates the caught exception was handled successfully
 
         return TransactionHandler(self)
@@ -943,6 +953,9 @@ class StarknetWrapper:
         """Predeclares the account class used by Starknet CLI"""
         state = self.get_state().state
         state.compiled_classes[STARKNET_CLI_ACCOUNT_CLASS_HASH] = oz_account_class
+        if self.config.verbose or not self.config.hide_predeployed_contracts:
+            print("Predeclared STARKNET CLI account: ", flush=True)
+            print(f"Class hash: {hex(STARKNET_CLI_ACCOUNT_CLASS_HASH)}\n", flush=True)
 
     async def __deploy_chargeable_account(self):
         if await self.is_deployed(ChargeableAccount.ADDRESS):

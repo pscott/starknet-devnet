@@ -23,7 +23,7 @@ from starkware.starknet.services.api.feeder_gateway.feeder_gateway_client import
     FeederGatewayClient,
 )
 
-from starknet_devnet.util import suppress_feeder_gateway_client_logger
+from starknet_devnet.util import suppress_feeder_gateway_client_logger, warn
 
 from . import __version__
 from .constants import (
@@ -210,6 +210,23 @@ class PositiveAction(argparse.Action):
         setattr(namespace, self.dest, value)
 
 
+class WarnIfDeprecatedArgumentAction(argparse.Action):
+    """
+    Action to warn if user uses old flag;
+    """
+
+    def __init__(self, nargs=0, **kw):
+        super().__init__(nargs=nargs, **kw)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if option_string == "--hide-predeployed-accounts":
+            warn(
+                "WARNING: Argument --hide-predeployed-accounts is deprecated; applying --hide-predeployed-contracts instead",
+                file=sys.stderr,
+            )
+        setattr(namespace, self.dest, True)
+
+
 def _assert_valid_compiler(command: List[str]):
     """Assert user machine can compile with cairo 1"""
     check = subprocess.run(
@@ -265,6 +282,16 @@ def parse_args(raw_args: List[str]):
         version=__version__,
     )
     parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Show more verbose output. Has higher priority than --hide-server-logs and --hide-predeployed-contracts",
+    )
+    parser.add_argument(
+        "--hide-server-logs",
+        action="store_true",
+        help="Hide server access logging",
+    )
+    parser.add_argument(
         "--host",
         help=f"Specify the address to listen at; defaults to {DEFAULT_HOST} "
         "(use the address the program outputs on start)",
@@ -317,9 +344,10 @@ def parse_args(raw_args: List[str]):
         help="Specify the seed for randomness of accounts to be predeployed",
     )
     parser.add_argument(
-        "--hide-predeployed-accounts",
-        action="store_true",
-        help="Prevents from printing the predeployed accounts details",
+        "--hide-predeployed-contracts",
+        "--hide-predeployed-accounts",  # for backwards compatibility
+        action=WarnIfDeprecatedArgumentAction,
+        help="Prevents from printing the predeployed contracts details. Argument --hide-predeployed-accounts is deprecated",
     )
     parser.add_argument(
         "--start-time",
@@ -437,7 +465,7 @@ class DevnetConfig:
         self.lite_mode = self.args.lite_mode
         self.blocks_on_demand = self.args.blocks_on_demand
         self.account_class = self.args.account_class
-        self.hide_predeployed_accounts = self.args.hide_predeployed_accounts
+        self.hide_predeployed_contracts = self.args.hide_predeployed_contracts
         self.fork_network = self.args.fork_network
         self.fork_block = self.args.fork_block
         self.chain_id = self.args.chain_id
@@ -445,3 +473,4 @@ class DevnetConfig:
         self.validate_rpc_responses = not self.args.disable_rpc_response_validation
         self.cairo_compiler_manifest = self.args.cairo_compiler_manifest
         self.sierra_compiler_path = self.args.sierra_compiler_path
+        self.verbose = self.args.verbose

@@ -23,3 +23,6 @@ class ChargeableAccount(Account):
             initial_balance=2**251,  # loads of cash
             account_class_wrapper=starknet_wrapper.config.account_class,
         )
+
+    def print(self):
+        pass
