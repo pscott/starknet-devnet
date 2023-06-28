@@ -40,6 +40,10 @@ starknet-devnet --load-path <PATH>
 curl -X POST http://<HOST>:<PORT>/load -d '{ "path": <PATH> }' -H "Content-Type: application/json"
 ```
 
+## Cross-version disclaimer
+
+Dumping and loading is not guaranteed to work cross-version. I.e. if you dumped one version of Devnet (e.g. 0.5.0), do not expect it to be loadable with a different version (e.g. 0.5.4).
+
 ## Enabling dumping and loading with Docker
 
 To enable dumping and loading if running Devnet in a Docker container, you must bind the container path with the path on your host machine.
