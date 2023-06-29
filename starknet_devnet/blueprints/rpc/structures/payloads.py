@@ -1020,6 +1020,7 @@ def gateway_to_rpc_invocation(
         "contract_address",
         "entry_point_selector",
         "calldata",
+        "call_type",
         "caller_address",
         "entry_point_type",
         "class_hash",
