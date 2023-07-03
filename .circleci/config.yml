@@ -40,8 +40,7 @@ jobs:
           command: ./scripts/check_import_sort.sh
       - run:
           name: Run pytest tests
-          # command: ./scripts/test.sh
-          command: echo "Temporarily skipping tests"
+          command: ./scripts/test.sh
 
   # Since cairo-lang 0.11.0, supported py_min and py_max are the same.
   # Uncomment and modify these lines if py_min and py_max stop being the same.
