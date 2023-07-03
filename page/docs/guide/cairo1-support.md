@@ -12,9 +12,14 @@ Make sure your Devnet is using the same compiler version that you used for the c
 - `--sierra-compiler-path <PATH_TO_SIERRA_EXECUTABLE>`
 
 By default, Devnet runs the compiler with `--add-pythonic-hints`. Modify this with Devnet's `--compiler-args` CLI argument. You will probably want to use the same set of flags that you used when originally compiling. E.g. if in your development environment you ran `starknet-sierra-compile` with `--add-pythonic-hints` and `--allowed-libfuncs-list-file /my/path/to/lib_funcs.json`, you should start Devnet with (notice the quotes):
+
 ```
 $ starknet-devnet --compiler-args "--add-pythonic-hints --allowed-libfuncs-list-file /my/path/to/lib_funcs.json"`
 ```
+
+## Cairo 2 support
+
+There is no difference in how Devnet treats Cairo 2 contracts, so the [paragraph on Cairo 1](#cairo-1-support) support should be applicable.
 
 ## Compiler binaries
 
@@ -22,7 +27,7 @@ Other than cloning [the compiler repo](https://github.com/starkware-libs/cairo) 
 
 ## Docker support
 
-Devnet's Docker image has a Cairo compiler set up internally, so Cairo 1 is supported out-of-the-box. But to use a custom compiler , you should have a statically linked executable binary sierra compiler on your host and use it like this (use absolute paths when mounting):
+Devnet's Docker image has a Cairo compiler set up internally, so Cairo 1 is supported out-of-the-box. But to use a custom compiler, you should have a statically linked executable binary sierra compiler on your host and use it like this (use absolute paths when mounting):
 
 ```
 $ docker run -it \
