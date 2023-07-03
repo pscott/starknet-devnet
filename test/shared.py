@@ -25,7 +25,6 @@ REPLACING_ABI_PATH = f"{ARTIFACTS_PATH}/replacing.cairo/replacing_abi.json"
 ARTIFACTS_1_PATH = "test/artifacts/contracts/cairo1"
 CONTRACT_1_PATH = f"{ARTIFACTS_1_PATH}/contract.cairo/contract.json"
 CONTRACT_1_CASM_PATH = f"{ARTIFACTS_1_PATH}/contract.cairo/contract.casm"
-ABI_1_PATH = f"{ARTIFACTS_1_PATH}/contract.cairo/contract_abi.json"
 
 STARKNET_CLI_ACCOUNT_ABI_PATH = f"{ARTIFACTS_PATH}/starknet_cli_oz_account_abi.json"
 with open(STARKNET_CLI_ACCOUNT_ABI_PATH, "w", encoding="utf-8") as oz_account_abi_file:
@@ -38,7 +37,9 @@ BALANCE_KEY = (
     "916907772491729262376534102982219947830828984996257231353398618781993312401"
 )
 
-EXPECTED_CLASS_HASH = "0xe027aece4bb671db3fcc3599ab6917f7702f7b861d00ece651bece3046ac21"
+EXPECTED_CLASS_HASH = (
+    "0x7b49a5a6481737fc9f23f93086f8b53acefba360546340e2324e1d1f01c2d02"
+)
 # hash of contract at CONTRACT_1_PATH
 EXPECTED_CLASS_1_HASH = (
     "0x2dc84cbdfc63f980cc6f8b9054184d7e33f43fdc02b2baf40017ea88490212d"

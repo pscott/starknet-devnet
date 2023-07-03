@@ -18,7 +18,6 @@ from starkware.starknet.services.api.contract_class.contract_class_utils import 
 from .account import deploy, invoke, send_declare_v2
 from .settings import APP_URL
 from .shared import (
-    ABI_1_PATH,
     CONTRACT_1_CASM_PATH,
     CONTRACT_1_PATH,
     PREDEPLOY_ACCOUNT_CLI_ARGS,
@@ -36,6 +35,7 @@ from .util import (
     get_class_by_hash,
     get_compiled_class_by_class_hash,
     get_full_contract_raw,
+    get_transaction,
 )
 
 
@@ -58,10 +58,7 @@ def assert_already_declared(
     assert declaration_resp.status_code == 200, declaration_resp.json()
     declare_tx_hash = declaration_resp.json()["transaction_hash"]
 
-    tx_resp = requests.get(
-        f"{feeder_gateway_url}/feeder_gateway/get_transaction",
-        params={"transactionHash": declare_tx_hash},
-    )
+    tx_resp = get_transaction(declare_tx_hash, feeder_gateway_url)
     assert tx_resp.status_code == 200, tx_resp.json()
     tx_resp_body = tx_resp.json()
 
@@ -182,7 +179,6 @@ def _call_get_balance(address: str) -> int:
     balance = call(
         function="get_balance",
         address=address,
-        abi_path=ABI_1_PATH,
     )
     return int(balance, base=10)
 
@@ -224,7 +220,7 @@ def test_v2_contract_interaction():
     # invoke
     increment_value = 15
     invoke_tx_hash = invoke(
-        calls=[(deploy_info["address"], "increase_balance", [increment_value, 0])],
+        calls=[(deploy_info["address"], "increase_balance", [increment_value])],
         account_address=PREDEPLOYED_ACCOUNT_ADDRESS,
         private_key=PREDEPLOYED_ACCOUNT_PRIVATE_KEY,
     )

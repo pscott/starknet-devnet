@@ -460,7 +460,7 @@ def assert_full_contract_not_present(address: str, feeder_gateway_url=APP_URL):
     )
 
     assert resp.json()["code"] == str(StarknetErrorCode.UNINITIALIZED_CONTRACT)
-    assert resp.status_code == 500
+    assert resp.status_code == 400
 
 
 def assert_full_contract(address: str, expected_path: str, feeder_gateway_url=APP_URL):
@@ -484,7 +484,7 @@ def assert_address_has_no_class_hash(contract_address: str, feeder_gateway_url=A
         {"contractAddress": contract_address},
     )
     assert resp.json()["code"] == str(StarknetErrorCode.UNINITIALIZED_CONTRACT)
-    assert resp.status_code == 500
+    assert resp.status_code == 400
 
 
 def assert_class_hash_at_address(
@@ -742,7 +742,15 @@ def set_time(time_s):
 
 def assert_undeclared_class(resp=requests.Response):
     """Assert that the provided response indicates a failure due to an undeclared class"""
-    assert resp.status_code == 500, resp.json()
+    assert resp.status_code == 400, f"Invalid status code of {resp.json()}"
     resp_body = resp.json()
     assert "code" in resp_body
     assert resp_body["code"] == str(StarknetErrorCode.UNDECLARED_CLASS)
+
+
+def get_transaction(tx_hash: str, feeder_gateway_url=APP_URL):
+    """Return response of get_transaction request"""
+    return requests.get(
+        f"{feeder_gateway_url}/feeder_gateway/get_transaction",
+        params={"transactionHash": tx_hash},
+    )

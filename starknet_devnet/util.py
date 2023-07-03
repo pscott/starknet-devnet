@@ -12,6 +12,7 @@ from typing import Dict, List, Set, Tuple
 
 from flask import request
 from starkware.starknet.business_logic.state.state import CachedState
+from starkware.starknet.business_logic.state.storage_domain import StorageDomain
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from starkware.starknet.services.api.feeder_gateway.response_objects import (
     ClassHashPair,
@@ -74,7 +75,7 @@ class StarknetDevnetException(StarkException):
     Indicates the raised issue is devnet-related.
     """
 
-    def __init__(self, code: StarknetErrorCode, status_code=500, message=None):
+    def __init__(self, code: StarknetErrorCode, status_code=400, message=None):
         super().__init__(code=code, message=message)
         self.status_code = status_code
 
@@ -85,6 +86,7 @@ class UndeclaredClassDevnetException(StarknetDevnetException):
     def __init__(self, class_hash: int):
         super().__init__(
             code=StarknetErrorCode.UNDECLARED_CLASS,
+            status_code=400,
             message=f"Class with hash {class_hash:#x} is not declared.",
         )
 
@@ -196,15 +198,21 @@ async def get_storage_diffs(
     storage_diffs: Dict[int, List[StorageEntry]] = {}
 
     for address, key in visited_storage_entries or {}:
-        old_storage_value = await previous_state.get_storage_at(address, key)
-        new_storage_value = await current_state.get_storage_at(address, key)
+        old_storage_value = await previous_state.get_storage_at(
+            StorageDomain.ON_CHAIN, address, key
+        )
+        new_storage_value = await current_state.get_storage_at(
+            StorageDomain.ON_CHAIN, address, key
+        )
         if old_storage_value != new_storage_value:
             if address not in storage_diffs:
                 storage_diffs[address] = []
             storage_diffs[address].append(
                 StorageEntry(
                     key=key,
-                    value=await current_state.get_storage_at(address, key),
+                    value=await current_state.get_storage_at(
+                        StorageDomain.ON_CHAIN, address, key
+                    ),
                 )
             )
 

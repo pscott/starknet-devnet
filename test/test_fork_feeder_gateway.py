@@ -56,10 +56,10 @@ from .util import (
 
 DEPLOYMENT_INPUT = "10"
 EXPECTED_DEPLOYMENT_ADDRESS = (
-    "0x33dd92d6c43ba552eec47842e35d578012929ed4672a42aa5727f8a3a9471b6"
+    "0x4350ca31a23a51479a63b28c0c3b4ade03f86223f640914ce4d3667ff0978fb"
 )
 EXPECTED_INVOKE_HASH = (
-    "0x26f966f10eb28d442650fb6f3829d3d9298812e00ef60583a496ece0bb45082"
+    "0x5499d481a6e6c174a745629091f2387949ff11f2c9b2aaf436d2633002807ea"
 )
 
 
@@ -257,7 +257,7 @@ def test_cairo1_class_declared_on_origin():
 def _assert_transaction_trace_not_present(tx_hash: str, feeder_gateway_url=APP_URL):
     resp = get_transaction_trace_response(tx_hash, server_url=feeder_gateway_url)
     assert resp.json()["code"] == str(StarknetErrorCode.INVALID_TRANSACTION_HASH)
-    assert resp.status_code == 500
+    assert resp.status_code == 400
 
 
 def _assert_transaction_trace_present(
@@ -367,7 +367,7 @@ def _assert_block_artifact_not_found(
         {"blockNumber": block_number, "blockHash": block_hash},
     )
     assert json.loads(resp.text)["code"] == str(StarknetErrorCode.BLOCK_NOT_FOUND)
-    assert resp.status_code == 500
+    assert resp.status_code == 400
 
 
 @devnet_in_background(

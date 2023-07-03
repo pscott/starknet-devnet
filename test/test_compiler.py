@@ -48,6 +48,10 @@ SIERRA_COMPILER_PATH = os.path.join(
     CAIRO_1_COMPILER_REPO, "target", "debug", "starknet-sierra-compile"
 )
 
+# if it's just one argument, we append a space so that it doesn't get parsed as a separate CLI arg
+DEFAULT_COMPILER_ARGS_STRINGIFIED = " ".join(DEFAULT_COMPILER_ARGS) + " "
+
+
 ACTIVE_DEVNET = DevnetBackgroundProc()
 
 
@@ -194,19 +198,19 @@ def test_manifest_and_sierra_compiler_specified():
             "--cairo-compiler-manifest",
             CAIRO_1_COMPILER_MANIFEST,
             "--compiler-args",
-            " ".join(DEFAULT_COMPILER_ARGS),
+            DEFAULT_COMPILER_ARGS_STRINGIFIED,
         ),
         (
             *PREDEPLOY_ACCOUNT_CLI_ARGS,
             "--sierra-compiler-path",
             SIERRA_COMPILER_PATH,
             "--compiler-args",
-            " ".join(DEFAULT_COMPILER_ARGS),
+            DEFAULT_COMPILER_ARGS_STRINGIFIED,
         ),
         (
             *PREDEPLOY_ACCOUNT_CLI_ARGS,
             "--compiler-args",
-            " ".join(DEFAULT_COMPILER_ARGS),
+            DEFAULT_COMPILER_ARGS_STRINGIFIED,
         ),
     ],
     indirect=True,
@@ -226,10 +230,13 @@ def test_compiler_args_happy_path():
 @devnet_in_background(
     *PREDEPLOY_ACCOUNT_CLI_ARGS,
     "--compiler-args",
-    "--allowed-libfuncs-list-name experimental_v0.1.0",
+    "",
 )
 def test_compiler_args_without_pythonic_hints():
-    """Expect failure if --add-pythonic-hints is not provided"""
+    """
+    Since originally in our compilation script compiled with --add-pythonic-hints,
+    we now expect failure if it is not provided on Devnet startup for later recopmilation.
+    """
     contract_class, _, compiled_class_hash = load_cairo1_contract()
     resp = send_declare_v2(
         contract_class=contract_class,

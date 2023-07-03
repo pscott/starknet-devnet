@@ -10,6 +10,7 @@ from typing import Dict, List, Optional, Set, Tuple, Type, Union
 
 import cloudpickle as pickle
 from starkware.starknet.business_logic.state.state import BlockInfo, CachedState
+from starkware.starknet.business_logic.state.storage_domain import StorageDomain
 from starkware.starknet.business_logic.transaction.fee import calculate_tx_fee
 from starkware.starknet.business_logic.transaction.objects import (
     CallInfo,
@@ -186,6 +187,8 @@ class StarknetWrapper:
         transactions: List[DevnetTransaction] = []
         transaction_hash = 1
 
+        self.genesis_block_number = self.blocks.get_next_block_number()
+
         # Declare transactions
         declare_hashes = [
             FeeToken.HASH,
@@ -198,7 +201,10 @@ class StarknetWrapper:
                 transaction_hash, class_hash
             )
             declare_transaction = create_genesis_block_transaction(
-                internal_declare, TransactionType.DECLARE
+                internal_declare,
+                TransactionType.DECLARE,
+                block_number=self.genesis_block_number,
+                transaction_index=len(transactions),
             )
             transactions.append(declare_transaction)
             transaction_hash += 1
@@ -218,7 +224,10 @@ class StarknetWrapper:
                 transaction_hash, class_hash, contract_address
             )
             deploy_transaction = create_genesis_block_transaction(
-                internal_deploy, TransactionType.DEPLOY
+                internal_deploy,
+                TransactionType.DEPLOY,
+                block_number=self.genesis_block_number,
+                transaction_index=len(transactions),
             )
             transactions.append(deploy_transaction)
             transaction_hash += 1
@@ -227,13 +236,9 @@ class StarknetWrapper:
         state = self.get_state()
         state_update = await self.update_pending_state()
         await self.blocks.generate_pending(transactions, state, state_update)
-        block = await self.generate_latest_block(block_hash=0)
-
-        # Set the genesis block number
-        self.genesis_block_number = block.block_number
+        await self.generate_latest_block(block_hash=0)
 
         for transaction in transactions:
-            transaction.set_block(block=block)
             self.transactions.store(transaction.transaction_hash, transaction)
 
     async def create_empty_block(self) -> StarknetBlock:
@@ -477,12 +482,14 @@ class StarknetWrapper:
                         status=status,
                         execution_info=TransactionExecutionInfo.empty(),
                         transaction_hash=tx_hash,
+                        block_number=None,  # Rejected txs have no block number
+                        transaction_index=None,  # Rejected txs have no tx index
                     )
                     self.starknet_wrapper._store_transaction(
                         transaction, error_message=exc.message
                     )
                 else:
-                    status = TransactionStatus.PENDING
+                    status = TransactionStatus.ACCEPTED_ON_L2
 
                     assert self.execution_info is not None
                     if self.execution_info.call_info:
@@ -499,11 +506,17 @@ class StarknetWrapper:
                         visited_storage_entries=self.visited_storage_entries,
                     )
 
+                    next_block_number = (
+                        self.starknet_wrapper.blocks.get_next_block_number()
+                    )
+
                     transaction = DevnetTransaction(
                         internal_tx=self.internal_tx,
                         status=status,
                         execution_info=self.execution_info,
                         transaction_hash=tx_hash,
+                        block_number=next_block_number,
+                        transaction_index=len(self.starknet_wrapper.pending_txs),
                     )
                     self.starknet_wrapper.pending_txs.append(transaction)
                     self.starknet_wrapper._store_transaction(transaction)
@@ -664,6 +677,11 @@ class StarknetWrapper:
 
         # first handle the case of artifact being locally present
         if class_hash in self._contract_classes:
+            contract_class = self._contract_classes[class_hash]
+            if isinstance(contract_class, DeprecatedCompiledClass):
+                # should raise if class hash does not belong to sierra of a cairo 1 contract
+                raise UndeclaredClassDevnetException(class_hash)
+
             compiled_class_hash = await state.get_compiled_class_hash(class_hash)
             return await state.get_compiled_class(compiled_class_hash)
 
@@ -677,7 +695,6 @@ class StarknetWrapper:
         except AssertionError:
             # the received hash is compiled_class_hash of a cairo1 class
             pass
-
         raise UndeclaredClassDevnetException(class_hash)
 
     async def get_class_hash_at(
@@ -734,7 +751,11 @@ class StarknetWrapper:
         Returns the storage identified by `key` from the contract at `contract_address`.
         """
         state = await self.__get_query_state(block_id)
-        return hex(await state.state.get_storage_at(contract_address, key))
+        return hex(
+            await state.state.get_storage_at(
+                StorageDomain.ON_CHAIN, contract_address, key
+            )
+        )
 
     async def load_messaging_contract_in_l1(
         self, network_url: str, contract_address: str, network_id: str
@@ -944,7 +965,7 @@ class StarknetWrapper:
     ):
         """Returns nonce of contract with `contract_address`"""
         state = await self.__get_query_state(block_id)
-        return await state.state.get_nonce_at(contract_address)
+        return await state.state.get_nonce_at(StorageDomain.ON_CHAIN, contract_address)
 
     async def __predeclare_starknet_cli_account(self):
         """Predeclares the account class used by Starknet CLI"""

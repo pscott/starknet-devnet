@@ -5,6 +5,7 @@ import pprint
 import sys
 
 from starkware.solidity.utils import load_nearby_contract
+from starkware.starknet.business_logic.state.storage_domain import StorageDomain
 from starkware.starknet.business_logic.transaction.objects import InternalInvokeFunction
 from starkware.starknet.compiler.compile import get_selector_from_name
 from starkware.starknet.services.api.contract_class.contract_class import (
@@ -58,24 +59,28 @@ class FeeToken(PredeployedContractWrapper):
     async def _mimic_constructor(self):
         starknet: Starknet = self.starknet_wrapper.starknet
         await starknet.state.state.set_storage_at(
-            FeeToken.ADDRESS,
-            get_selector_from_name("ERC20_name"),
-            str_to_felt(FeeToken.NAME),
+            storage_domain=StorageDomain.ON_CHAIN,
+            contract_address=FeeToken.ADDRESS,
+            key=get_selector_from_name("ERC20_name"),
+            value=str_to_felt(FeeToken.NAME),
         )
         await starknet.state.state.set_storage_at(
-            FeeToken.ADDRESS,
-            get_selector_from_name("ERC20_symbol"),
-            str_to_felt(FeeToken.SYMBOL),
+            storage_domain=StorageDomain.ON_CHAIN,
+            contract_address=FeeToken.ADDRESS,
+            key=get_selector_from_name("ERC20_symbol"),
+            value=str_to_felt(FeeToken.SYMBOL),
         )
         await starknet.state.state.set_storage_at(
-            FeeToken.ADDRESS,
-            get_selector_from_name("ERC20_decimals"),
-            18,
+            storage_domain=StorageDomain.ON_CHAIN,
+            contract_address=FeeToken.ADDRESS,
+            key=get_selector_from_name("ERC20_decimals"),
+            value=18,
         )
         await starknet.state.state.set_storage_at(
-            FeeToken.ADDRESS,
-            get_selector_from_name("Ownable_owner"),
-            ChargeableAccount.ADDRESS,
+            storage_domain=StorageDomain.ON_CHAIN,
+            contract_address=FeeToken.ADDRESS,
+            key=get_selector_from_name("Ownable_owner"),
+            value=ChargeableAccount.ADDRESS,
         )
 
     async def get_balance(self, address: int) -> int:
@@ -102,7 +107,9 @@ class FeeToken(PredeployedContractWrapper):
 
         # we need a funded account for this since the tx has to be signed and a fee will be charged
         # a user-intedded predeployed account cannot be used for this
-        nonce = await starknet.state.state.get_nonce_at(ChargeableAccount.ADDRESS)
+        nonce = await starknet.state.state.get_nonce_at(
+            StorageDomain.ON_CHAIN, ChargeableAccount.ADDRESS
+        )
         chargeable_address = hex(ChargeableAccount.ADDRESS)
         signature, execute_calldata = get_execute_args(
             calls=[(hex(FeeToken.ADDRESS), "mint", calldata)],
