@@ -24,7 +24,8 @@ Response:
 
 ### Create a block on demand
 
-If you start Devnet with `--blocks-on-demand` CLI option, all transactions will be pending and stored in a pending block (targetable via block ID `"pending"`).
+If you start Devnet with the `--blocks-on-demand` CLI option, all valid transactions will be stored in a pending block (targetable via block ID `"pending"`). Since Devnet v0.5.5, the status of these transactions is no longer pending, but accepted. The status of the block is pending.
+
 To create a block on demand, send a `POST` request to `/create_block`. This will convert the pending block to the latest block (targetable via block ID `"latest"`), giving it a block hash and a block number. All subsequent transactions will be stored to a new pending block.
 
 In case of demanding block creation with no pending transactions, a new empty block will be generated.
