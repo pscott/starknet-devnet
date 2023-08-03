@@ -11,7 +11,7 @@ Let's discover **[starknet-devnet](https://github.com/0xSpaceShard/starknet-devn
 
 :::
 
-- This Python implementation of Devnet is **DEPRECATED** and being replaced with a Rust implementation: [project link](https://github.com/0xSpaceShard/starknet-devnet-rs)
+- This Python implementation of Devnet is **DEPRECATED** and being replaced with a Rust implementation (WIP): [project link](https://github.com/0xSpaceShard/starknet-devnet-rs)
 - Devnet should not be used as a replacement for Alpha testnet. After testing on Devnet, be sure to test on testnet (alpha-goerli)!
 - Sending transactions with max_fee set to 0 is supported (not supported on alpha-mainnet or alpha-goerli).
 - The semantics of `REJECTED` and `REVERTED` status of a transaction is not the same as on the official testnet:

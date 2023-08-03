@@ -318,12 +318,7 @@ class DevnetTransactions:
         self.__instances[tx_hash].finality_status = FinalityStatus.ACCEPTED_ON_L2
         self.__instances[tx_hash].execution_status = ExecutionStatus.REVERTED
         self.__instances[tx_hash].block = None
-        self.__instances[tx_hash].revert_error = str(
-            TransactionFailureReason(
-                code=StarknetErrorCode.TRANSACTION_FAILED.name,
-                error_message="Block aborted.",
-            )
-        )
+        self.__instances[tx_hash].revert_error = "Block aborted"
 
 
 def create_empty_internal_declare(tx_hash: int, class_hash: int) -> InternalDeclare:
