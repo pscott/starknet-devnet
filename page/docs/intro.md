@@ -16,10 +16,12 @@ Let's discover **[starknet-devnet](https://github.com/0xSpaceShard/starknet-devn
 - Sending transactions with max_fee set to 0 is supported (not supported on alpha-mainnet or alpha-goerli).
 - The semantics of `REJECTED` and `REVERTED` status of a transaction is not the same as on the official testnet:
 
-| Status     | Official testnet                                               | Devnet                                                         |
-| ---------- | -------------------------------------------------------------- | -------------------------------------------------------------- |
-| `REJECTED` | tx validation failed; not included in a block                  | not unused                                                     |
-| `REVERTED` | tx validation passed but execution failed; included in a block | either validation or execution failed; not included in a block |
+| Tx status  | Official testnet                                            | Devnet                                                     |
+| ---------- | ----------------------------------------------------------- | ---------------------------------------------------------- |
+| `REJECTED` | validation failed; not included in a block                  | not used                                                   |
+| `REVERTED` | validation passed but execution failed; included in a block | validation or execution failed; not included in a block`*` |
+
+`*`: dummy zeroes (0) in tx info for block number and tx index
 
 ## Requirements
 
