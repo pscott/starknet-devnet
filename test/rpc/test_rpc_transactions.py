@@ -870,7 +870,7 @@ def test_add_deploy_account_transaction(deploy_account_details):
     tx_before = tx_before["result"]
 
     # deployment should fail if no funds
-    assert_tx_status(tx_before["transaction_hash"], "REJECTED")
+    assert_tx_status(tx_before["transaction_hash"], "REVERTED")
 
     # fund the address of the account
     mint(hex(address), amount=int(1e18))

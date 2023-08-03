@@ -46,6 +46,8 @@ from starkware.starknet.services.api.feeder_gateway.response_objects import (
     BlockStateUpdate,
     ClassHashPair,
     ContractAddressHashPair,
+    ExecutionStatus,
+    FinalityStatus,
     StarknetBlock,
     StateDiff,
     StorageEntry,
@@ -340,18 +342,6 @@ class StarknetWrapper:
             state_diff=state_diff,
         )
 
-    def _store_transaction(
-        self,
-        transaction: DevnetTransaction,
-        error_message: str = None,
-    ) -> StarknetBlock:
-        """Stores the provided transaction in the transaction storage."""
-        if transaction.status == TransactionStatus.REJECTED:
-            assert error_message, "error_message must be present if tx rejected"
-            transaction.set_failure_reason(error_message)
-
-        self.transactions.store(transaction.transaction_hash, transaction)
-
     async def declare(
         self, external_tx: Union[Declare, DeprecatedDeclare]
     ) -> Tuple[int, int]:
@@ -470,7 +460,6 @@ class StarknetWrapper:
                         raise StarknetDevnetException(
                             code=StarknetErrorCode.UNEXPECTED_FAILURE, message=str(exc)
                         ) from exc
-                    status = TransactionStatus.REJECTED
 
                     # restore block info
                     self.starknet_wrapper.get_state().state.block_info = (
@@ -479,18 +468,19 @@ class StarknetWrapper:
 
                     transaction = DevnetTransaction(
                         internal_tx=self.internal_tx,
-                        status=status,
+                        status=TransactionStatus.REVERTED,
+                        execution_status=ExecutionStatus.REVERTED,
+                        finality_status=FinalityStatus.ACCEPTED_ON_L2,
                         execution_info=TransactionExecutionInfo.empty(),
                         transaction_hash=tx_hash,
-                        block_number=None,  # Rejected txs have no block number
-                        transaction_index=None,  # Rejected txs have no tx index
+                        block_number=0,  # Rejected txs have no block number
+                        transaction_index=0,  # Rejected txs have no tx index
+                        revert_error=exc.message,
                     )
-                    self.starknet_wrapper._store_transaction(
-                        transaction, error_message=exc.message
+                    self.starknet_wrapper.transactions.store(
+                        transaction.transaction_hash, transaction
                     )
                 else:
-                    status = TransactionStatus.ACCEPTED_ON_L2
-
                     assert self.execution_info is not None
                     if self.execution_info.call_info:
                         await self.starknet_wrapper._register_new_contracts(
@@ -512,14 +502,18 @@ class StarknetWrapper:
 
                     transaction = DevnetTransaction(
                         internal_tx=self.internal_tx,
-                        status=status,
+                        status=TransactionStatus.ACCEPTED_ON_L2,
+                        execution_status=ExecutionStatus.SUCCEEDED,
+                        finality_status=FinalityStatus.ACCEPTED_ON_L2,
                         execution_info=self.execution_info,
                         transaction_hash=tx_hash,
                         block_number=next_block_number,
                         transaction_index=len(self.starknet_wrapper.pending_txs),
                     )
                     self.starknet_wrapper.pending_txs.append(transaction)
-                    self.starknet_wrapper._store_transaction(transaction)
+                    self.starknet_wrapper.transactions.store(
+                        transaction.transaction_hash, transaction
+                    )
 
                     await self.starknet_wrapper.update_pending_block(state_update)
 
@@ -911,6 +905,7 @@ class StarknetWrapper:
                     execution_info.fee_transfer_info
                 ),
                 signature=external_tx.signature,
+                revert_error=execution_info.revert_error,
             )
             traces.append(trace)
 
@@ -1037,9 +1032,9 @@ class StarknetWrapper:
                 hex(last_block.block_hash)
             )
 
-            # Reject transactions.
+            # Revert transactions.
             for transaction in last_block.transactions:
-                await self.transactions.reject_transaction(
+                await self.transactions.revert_transaction_in_aborted_block(
                     tx_hash=transaction.transaction_hash
                 )
 

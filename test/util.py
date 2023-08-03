@@ -248,7 +248,9 @@ def assert_transaction_not_received(tx_hash: str, feeder_gateway_url=APP_URL):
         ["get_transaction", "--hash", tx_hash], gateway_url=feeder_gateway_url
     )
     transaction = json.loads(output.stdout)
-    assert_equal(transaction, {"status": "NOT_RECEIVED"})
+    assert_equal(
+        transaction, {"finality_status": "NOT_RECEIVED", "status": "NOT_RECEIVED"}
+    )
 
 
 def assert_transaction_receipt_not_received(tx_hash: str, feeder_gateway_url=APP_URL):
@@ -260,6 +262,7 @@ def assert_transaction_receipt_not_received(tx_hash: str, feeder_gateway_url=APP
             "events": [],
             "l2_to_l1_messages": [],
             "status": "NOT_RECEIVED",
+            "finality_status": "NOT_RECEIVED",
             "transaction_hash": "0x0",
         },
     )
@@ -367,6 +370,9 @@ def assert_tx_status(tx_hash, expected_tx_status: str, feeder_gateway_url=APP_UR
 
     if tx_status == "REJECTED":
         assert "tx_failure_reason" in response, f"Key not found in {response}"
+
+    if tx_status == "REVERTED":
+        assert "tx_revert_reason" in response, f"Key not found in {response}"
 
 
 def assert_contract_code_present(address: str, feeder_gateway_url=APP_URL):
