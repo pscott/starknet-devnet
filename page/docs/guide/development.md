@@ -175,6 +175,8 @@ $ poetry version
 $ poetry run starknet-devnet --version
 ```
 
+Make sure the compiler version has been updated everywhere, as per [this paragraph](#development---adapting-to-a-new-version-of-cairo-lang).
+
 Commit (Notice the `v`):
 
 ```
