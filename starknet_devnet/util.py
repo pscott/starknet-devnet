@@ -11,9 +11,12 @@ from dataclasses import dataclass
 from typing import Dict, List, Set, Tuple
 
 from flask import request
+from services.everest.definitions.fields import format_felt_list
 from starkware.starknet.business_logic.state.state import CachedState
 from starkware.starknet.business_logic.state.storage_domain import StorageDomain
+from starkware.starknet.business_logic.transaction.objects import CallInfo
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
+from starkware.starknet.public.abi import SELECTOR_TO_NAME
 from starkware.starknet.services.api.feeder_gateway.response_objects import (
     ClassHashPair,
     ContractAddressHashPair,
@@ -21,7 +24,11 @@ from starkware.starknet.services.api.feeder_gateway.response_objects import (
     StorageEntry,
 )
 from starkware.starknet.testing.contract import StarknetContract
-from starkware.starkware_utils.error_handling import StarkErrorCode, StarkException
+from starkware.starkware_utils.error_handling import (
+    StarkErrorCode,
+    StarkException,
+    stark_assert,
+)
 
 
 def parse_hex_string(arg: str) -> int:
@@ -343,3 +350,22 @@ def log_request(rpc=False):
         return wrapper
 
     return decorator
+
+
+def stark_assert_call_succeeded(call_info: CallInfo):
+    """Assert the call that produced the provided `call_info` was successful; fail otherwise"""
+    assert (
+        call_info.entry_point_selector is not None
+    ), "An entry point selector must be specified."
+    entry_point_name = SELECTOR_TO_NAME.get(call_info.entry_point_selector)
+    assert (
+        entry_point_name is not None
+    ), f"{call_info.entry_point_selector} isn't defined."
+    stark_assert(
+        call_info.result().succeeded,
+        code=StarknetErrorCode.VALIDATE_FAILURE,
+        message=(
+            f"{entry_point_name} call failed; failure reason: "
+            f"{format_felt_list(call_info.retdata)}."
+        ),
+    )

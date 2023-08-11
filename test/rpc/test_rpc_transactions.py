@@ -840,9 +840,10 @@ def test_add_deploy_account_transaction_on_incorrect_class_hash(deploy_account_d
     """
     invalid_class_hash = 1337
 
-    deploy_account_tx, address = prepare_deploy_account_tx(**deploy_account_details)
+    deploy_account_tx, address = prepare_deploy_account_tx(
+        **deploy_account_details, class_hash=invalid_class_hash
+    )
     rpc_deploy_account_tx = rpc_deploy_account_from_gateway(deploy_account_tx)
-    rpc_deploy_account_tx["class_hash"] = rpc_felt(invalid_class_hash)
 
     mint(hex(address), amount=int(1e18))
 
@@ -863,14 +864,15 @@ def test_add_deploy_account_transaction(deploy_account_details):
     deploy_account_tx, address = prepare_deploy_account_tx(**deploy_account_details)
     rpc_deploy_account_tx = rpc_deploy_account_from_gateway(deploy_account_tx)
 
+    # deployment should fail if no funds
     tx_before = rpc_call(
         "starknet_addDeployAccountTransaction",
         params={"deploy_account_transaction": rpc_deploy_account_tx},
     )
-    tx_before = tx_before["result"]
-
-    # deployment should fail if no funds
-    assert_tx_status(tx_before["transaction_hash"], "REVERTED")
+    assert tx_before["error"] == {
+        "code": 54,
+        "message": "Account balance is smaller than the transaction's max_fee",
+    }
 
     # fund the address of the account
     mint(hex(address), amount=int(1e18))
@@ -906,7 +908,7 @@ def test_add_deploy_account_transaction(deploy_account_details):
         selector=get_selector_from_name("increase_balance"),
         calldata=[10, 20],
         chain_id=DEFAULT_CHAIN_ID,
-        max_fee=int(1e18),
+        max_fee=int(1e15),  # smaller than account balance but sufficient
         version=SUPPORTED_RPC_TX_VERSION,
         nonce=1,
     ).dump()
