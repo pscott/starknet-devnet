@@ -11,6 +11,8 @@ Make sure your Devnet is using the same compiler version that you used for the c
 - `--cairo-compiler-manifest <PATH_TO_CARGO_TOML>`
 - `--sierra-compiler-path <PATH_TO_SIERRA_EXECUTABLE>`
 
+Where `PATH_TO_CARGO_TOML` path corresponds to the path to your local [cairo repo](https://github.com/starkware-libs/cairo/blob/main/Cargo.toml) (you may need to clone it!).
+
 ## Compiler args
 
 By default, Devnet runs the compiler with `--add-pythonic-hints`. Modify this with Devnet's `--compiler-args` CLI argument. You will probably want to use the same set of flags that you used when originally compiling. E.g. if in your development environment you ran `starknet-sierra-compile` with `--add-pythonic-hints` and `--allowed-libfuncs-list-file /my/path/to/lib_funcs.json`, you should start Devnet with (notice the quotes):
