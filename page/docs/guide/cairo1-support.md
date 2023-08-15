@@ -11,7 +11,7 @@ Make sure your Devnet is using the same compiler version that you used for the c
 - `--cairo-compiler-manifest <PATH_TO_CARGO_TOML>`
 - `--sierra-compiler-path <PATH_TO_SIERRA_EXECUTABLE>`
 
-Where `PATH_TO_CARGO_TOML` path corresponds to the path to your local [cairo repo](https://github.com/starkware-libs/cairo/blob/main/Cargo.toml) (you may need to clone it!).
+Where `PATH_TO_CARGO_TOML` path corresponds to the path to your local [cairo repo](https://github.com/starkware-libs/cairo/blob/main/Cargo.toml) (to set it up, follow the [Cairo Book instructions](https://book.cairo-lang.org/appendix-06-cairo-binaries.html)).
 
 ## Compiler args
 
